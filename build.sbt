@@ -56,7 +56,10 @@ lazy val m68k = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     Test / publishArtifact := false,
   )
   .jvmSettings(
-    libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.1.0" % "provided",
+    libraryDependencies ++= Seq(
+      "org.scala-js" %% "scalajs-stubs" % "1.1.0" % "provided",
+      "org.jline"     % "jline"          % "3.30.4",
+    ),
   )
   .nativeSettings(
     libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.1.0" % "provided",

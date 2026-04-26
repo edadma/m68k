@@ -1,6 +1,8 @@
 package io.github.edadma.m68k
 
-import scala.collection.mutable.ListBuffer
+import java.io.PrintStream
+
+import scala.collection.mutable.{HashMap, ListBuffer}
 
 import Addressing.*
 
@@ -51,8 +53,25 @@ class CPU(private[m68k] val memory: Memory) {
   protected[m68k] var running = false
   protected[m68k] var stopped = false
 
+  /** Breakpoint table — value `true` marks single-shot (cleared after firing). */
+  private[m68k] val breakpointMap = new HashMap[Int, Boolean]
+
+  /** Trace mode: when on, the CPU prints registers + the disassembled instruction after every step. */
+  var trace: Boolean         = false
+  var traceOut: PrintStream  = Console.out
+
+  /** Reverse symbol table — address → label, populated by tooling that loads symbol info. */
+  var reverseSymbols: Map[Int, String] = Map.empty
+
   def resettable(dev: Device): Unit = resettables += dev
   def isRunning: Boolean            = running
+
+  def isBreakpoint(addr: Int): Boolean       = breakpointMap.contains(addr)
+  def setBreakpoint(addr: Int): Unit         = breakpointMap(addr) = false
+  def setSingleShotBreakpoint(addr: Int): Unit = breakpointMap(addr) = true
+  def clearBreakpoint(addr: Int): Unit       = breakpointMap.remove(addr)
+  def clearBreakpoints(): Unit               = breakpointMap.clear()
+  def breakpoints: List[Int]                 = breakpointMap.keysIterator.toList.sorted
 
   // ----------------------------------------------------------------------------
   // CCR helpers — one masked OR per flag update
@@ -1052,16 +1071,61 @@ class CPU(private[m68k] val memory: Memory) {
   def step(): Unit = {
     fetch()
     OpcodeTable(instruction).apply(this)
+    if trace then {
+      registers(traceOut)
+      disassemble(traceOut)
+    }
   }
 
-  /** Run until `step()` is asked to stop (via `cpu.stop()`) or until `cycles` instructions have executed. */
+  /** Run until `step()` is asked to stop (via `cpu.stop()`), `cycles` instructions have executed, or PC lands on a
+    * breakpoint. Single-shot breakpoints are cleared the first time they fire so a continued `run()` doesn't trip on
+    * them again — that's how `stepOver` works.
+    */
   def run(cycles: Long = Long.MaxValue): Long = {
     running = true
     var n    = 0L
     while running && !stopped && n < cycles do {
-      step()
-      n += 1
+      breakpointMap.get(PC) match {
+        case Some(singleShot) =>
+          if singleShot then breakpointMap.remove(PC)
+          running = false
+        case None =>
+          step()
+          n += 1
+      }
     }
     n
+  }
+
+  // ----------------------------------------------------------------------------
+  // Pretty-printing for the REPL / debugger
+  // ----------------------------------------------------------------------------
+
+  /** Print all 8 D, all 8 A (with USP/SSP shown depending on supervisor mode), PC, SR, and CCR. */
+  def registers(out: PrintStream): Unit = {
+    var i = 0
+    while i < 8 do { out.print(s"D$i=${hexInt(D(i))} "); i += 1 }
+    out.println()
+    i = 0
+    while i < 7 do { out.print(s"A$i=${hexInt(A(i))} "); i += 1 }
+    out.print(s"A7=${hexInt(if supervisorMode then SSP else USP)} ")
+    out.println()
+    out.print(s"PC=${hexAddress(PC)}  SR=${hexShort(fromSR)}  ")
+    out.print((if X then "X" else "-") + (if N then "N" else "-") + (if Z then "Z" else "-"))
+    out.print((if V then "V" else "-") + (if C then "C" else "-"))
+    out.println(if supervisorMode then "  [supervisor]" else "  [user]")
+  }
+
+  /** Disassemble the instruction at the current PC and advance PC past it. Returns the byte count consumed (so the
+    * caller can step a window at once). The disassembly text is a placeholder mnemonic — the existing Instruction
+    * subclasses only return the operator, not full operand text.
+    */
+  def disassemble(out: PrintStream): Int = {
+    val pc0 = PC
+    fetch()
+    val text = OpcodeTable(instruction).disassemble(this)
+    val sym  = reverseSymbols.get(pc0).fold("")(s => s"  <$s>")
+    out.println(s"${hexAddress(pc0)}  ${hexShort(instruction)}  $text$sym")
+    PC - pc0
   }
 }

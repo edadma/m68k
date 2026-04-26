@@ -24,24 +24,38 @@ Building and testing
 
 ```
 sbt compile         # all three platforms
-sbt m68kJVM/test    # 349 tests, includes file-based integration tests
-sbt m68kJS/test     # 345 tests
-sbt m68kNative/test # 345 tests
+sbt m68kJVM/test    # 354 tests, includes file-based integration tests
+sbt m68kJS/test     # 350 tests
+sbt m68kNative/test # 350 tests
 ```
 
-Running an SREC
----------------
+Interactive REPL (default)
+--------------------------
 
 ```
-sbt 'm68kJVM/runMain io.github.edadma.m68k.Main path/to/program.srec'
-sbt 'm68kJVM/runMain io.github.edadma.m68k.Main path/to/program.srec --cycles 100000'
+sbt 'm68kJVM/runMain io.github.edadma.m68k.Main'                   # empty REPL
+sbt 'm68kJVM/runMain io.github.edadma.m68k.Main path/to/file.srec' # load + REPL
 ```
 
-Running a flat binary
----------------------
+Once at the `m68k>` prompt, type `help` for the full command list. Highlights:
+
+- `r [reg val]` — print state, or set a register / SR / CCR / PC
+- `u [addr]` / `d [addr]` — disassemble / hex+ASCII dump (each continues from where it left off)
+- `s` / `so` / `e [addr [/stop]]` — single step / step-over / run from PC (with optional single-shot breakpoint)
+- `b [addr]` / `b -addr` / `b -` — set / clear / clear-all breakpoints
+- `t on|off` — trace mode (regs + disasm after every instruction)
+- `sy name addr` — define a symbol; addresses can then be referenced by name everywhere
+- `m addr byte byte ...` — write bytes to memory; `m` alone prints the memory map
+
+History is persisted to `~/.m68k-repl-history`. ^D exits.
+
+Running non-interactively
+-------------------------
 
 ```
-sbt 'm68kJVM/runMain io.github.edadma.m68k.Main --bin path/to/program.bin --load-at 0'
+sbt 'm68kJVM/runMain io.github.edadma.m68k.Main path/to/file.srec --run'
+sbt 'm68kJVM/runMain io.github.edadma.m68k.Main --bin path/to/file.bin --load-at 0 --run'
+sbt 'm68kJVM/runMain io.github.edadma.m68k.Main path/to/file.srec --run --cycles 100000'
 ```
 
 `--load-at 0` loads the binary verbatim and trusts its first 8 bytes to be the reset vectors (SSP then PC). For an unwrapped `.text` extract, use `--load-at 0x100` and the loader synthesises vectors at 0 (SSP=0x11000, PC=0x100).
