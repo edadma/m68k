@@ -229,9 +229,29 @@ abstract class Memory extends Addressable {
           cachedStart   = r.start
           cachedEndExcl = r.start + r.size
           r
-        } else null
+        } else {
+          // Page hit but the recorded region doesn't cover this byte — multiple sub-page regions can share one
+          // page entry, and rebuildTable only stored the last one. Fall back to a linear scan over the regions
+          // in this page; cache whatever we find so subsequent sequential accesses are fast again.
+          val rr = scanForAddr(addr)
+          if (rr ne null) {
+            cachedRegion  = rr
+            cachedStart   = rr.start
+            cachedEndExcl = rr.start + rr.size
+          }
+          rr
+        }
       }
     }
+  }
+
+  private def scanForAddr(addr: Int): Addressable = {
+    val it = regions.iterator
+    while (it.hasNext) {
+      val r = it.next()
+      if (r.contains(addr)) return r
+    }
+    null
   }
 
   def init(): Unit
