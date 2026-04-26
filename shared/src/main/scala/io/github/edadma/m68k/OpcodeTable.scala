@@ -106,14 +106,18 @@ object OpcodeTable {
       "1110000 d 11 eee aaa; e:2-7" ->
         (o => if o('d') == 0 then new ASRMem(o('e'), o('a')) else new ASLMem(o('e'), o('a'))),
       "1110 ccc d ss i 00 rrr; s:0-2" ->
-        (o => (o('d'), addqsize(o)) match {
-          case (0, 0) => new ASRByteReg(o('c'), o('i'), o('r'))
-          case (0, 1) => new ASRShortReg(o('c'), o('i'), o('r'))
-          case (0, 2) => new ASRIntReg(o('c'), o('i'), o('r'))
-          case (1, 0) => new ASLByteReg(o('c'), o('i'), o('r'))
-          case (1, 1) => new ASLShortReg(o('c'), o('i'), o('r'))
-          case (1, 2) => new ASLIntReg(o('c'), o('i'), o('r'))
-        }),
+        (o => if o('d') == 0 then
+          addqsize(o) match {
+            case 0 => new ASRByteReg(o('c'), o('i'), o('r'))
+            case 1 => new ASRShortReg(o('c'), o('i'), o('r'))
+            case 2 => new ASRIntReg(o('c'), o('i'), o('r'))
+          }
+        else
+          addqsize(o) match {
+            case 0 => new ASLByteReg(o('c'), o('i'), o('r'))
+            case 1 => new ASLShortReg(o('c'), o('i'), o('r'))
+            case 2 => new ASLIntReg(o('c'), o('i'), o('r'))
+          }),
 
       "0110 cccc dddddddd" -> (o => new Bcc(o('c'), o('d').toByte)),
 
@@ -194,14 +198,18 @@ object OpcodeTable {
       "1110001 d 11 eee aaa; e:2-7" ->
         (o => if o('d') == 0 then new LSRMem(o('e'), o('a')) else new LSLMem(o('e'), o('a'))),
       "1110 ccc d ss i 01 rrr; s:0-2" ->
-        (o => (o('d'), addqsize(o)) match {
-          case (0, 0) => new LSRByteReg(o('c'), o('i'), o('r'))
-          case (0, 1) => new LSRShortReg(o('c'), o('i'), o('r'))
-          case (0, 2) => new LSRIntReg(o('c'), o('i'), o('r'))
-          case (1, 0) => new LSLByteReg(o('c'), o('i'), o('r'))
-          case (1, 1) => new LSLShortReg(o('c'), o('i'), o('r'))
-          case (1, 2) => new LSLIntReg(o('c'), o('i'), o('r'))
-        }),
+        (o => if o('d') == 0 then
+          addqsize(o) match {
+            case 0 => new LSRByteReg(o('c'), o('i'), o('r'))
+            case 1 => new LSRShortReg(o('c'), o('i'), o('r'))
+            case 2 => new LSRIntReg(o('c'), o('i'), o('r'))
+          }
+        else
+          addqsize(o) match {
+            case 0 => new LSLByteReg(o('c'), o('i'), o('r'))
+            case 1 => new LSLShortReg(o('c'), o('i'), o('r'))
+            case 2 => new LSLIntReg(o('c'), o('i'), o('r'))
+          }),
 
       "00 ss vvv uuu xxx yyy; s:1-3; u:0-7-1" ->
         (o => moveSize(o) match {
@@ -281,25 +289,33 @@ object OpcodeTable {
       "1110011 d 11 eee aaa; e:2-7" ->
         (o => if o('d') == 0 then new RORMem(o('e'), o('a')) else new ROLMem(o('e'), o('a'))),
       "1110 ccc d ss i 11 rrr; s:0-2" ->
-        (o => (o('d'), addqsize(o)) match {
-          case (0, 0) => new RORByteReg(o('c'), o('i'), o('r'))
-          case (0, 1) => new RORShortReg(o('c'), o('i'), o('r'))
-          case (0, 2) => new RORIntReg(o('c'), o('i'), o('r'))
-          case (1, 0) => new ROLByteReg(o('c'), o('i'), o('r'))
-          case (1, 1) => new ROLShortReg(o('c'), o('i'), o('r'))
-          case (1, 2) => new ROLIntReg(o('c'), o('i'), o('r'))
-        }),
+        (o => if o('d') == 0 then
+          addqsize(o) match {
+            case 0 => new RORByteReg(o('c'), o('i'), o('r'))
+            case 1 => new RORShortReg(o('c'), o('i'), o('r'))
+            case 2 => new RORIntReg(o('c'), o('i'), o('r'))
+          }
+        else
+          addqsize(o) match {
+            case 0 => new ROLByteReg(o('c'), o('i'), o('r'))
+            case 1 => new ROLShortReg(o('c'), o('i'), o('r'))
+            case 2 => new ROLIntReg(o('c'), o('i'), o('r'))
+          }),
       "1110010 d 11 eee aaa; e:2-7" ->
         (o => if o('d') == 0 then new ROXRMem(o('e'), o('a')) else new ROXLMem(o('e'), o('a'))),
       "1110 ccc d ss i 10 rrr; s:0-2" ->
-        (o => (o('d'), addqsize(o)) match {
-          case (0, 0) => new ROXRByteReg(o('c'), o('i'), o('r'))
-          case (0, 1) => new ROXRShortReg(o('c'), o('i'), o('r'))
-          case (0, 2) => new ROXRIntReg(o('c'), o('i'), o('r'))
-          case (1, 0) => new ROXLByteReg(o('c'), o('i'), o('r'))
-          case (1, 1) => new ROXLShortReg(o('c'), o('i'), o('r'))
-          case (1, 2) => new ROXLIntReg(o('c'), o('i'), o('r'))
-        }),
+        (o => if o('d') == 0 then
+          addqsize(o) match {
+            case 0 => new ROXRByteReg(o('c'), o('i'), o('r'))
+            case 1 => new ROXRShortReg(o('c'), o('i'), o('r'))
+            case 2 => new ROXRIntReg(o('c'), o('i'), o('r'))
+          }
+        else
+          addqsize(o) match {
+            case 0 => new ROXLByteReg(o('c'), o('i'), o('r'))
+            case 1 => new ROXLShortReg(o('c'), o('i'), o('r'))
+            case 2 => new ROXLIntReg(o('c'), o('i'), o('r'))
+          }),
 
       "0100111001110011" -> (_ => RTE),
       "0100111001110111" -> (_ => RTR),
