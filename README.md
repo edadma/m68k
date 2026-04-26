@@ -1,6 +1,13 @@
 m68k
 ====
 
+![Maven Central](https://img.shields.io/maven-central/v/io.github.edadma/m68k_sjs1_3)
+[![Last Commit](https://img.shields.io/github/last-commit/edadma/m68k)](https://github.com/edadma/m68k/commits)
+![GitHub](https://img.shields.io/github/license/edadma/m68k)
+![Scala Version](https://img.shields.io/badge/Scala-3.8.3-blue.svg)
+![ScalaJS Version](https://img.shields.io/badge/Scala.js-1.21.0-blue.svg)
+![Scala Native Version](https://img.shields.io/badge/Scala_Native-0.5.11-blue.svg)
+
 A Motorola 68000 emulator written in Scala 3, cross-compiled for the JVM, JS, and Native via sbt-crossproject.
 
 The CPU implements the user-mode 68000 ISA — every documented instruction, every addressing mode, every flag side-effect — and includes a default I/O personality (Easy68K-style TRAP #15 services) so freestanding programs can print to the host terminal and exit cleanly.
