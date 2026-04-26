@@ -1,1 +1,0 @@
-m68k-gcc -c -gstabs startup.s services.s syscalls.c $1

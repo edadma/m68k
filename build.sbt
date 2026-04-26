@@ -1,55 +1,82 @@
-name := "m68k"
+import xerial.sbt.Sonatype.sonatypeCentralHost
 
-version := "0.1.1"
+ThisBuild / licenses               := Seq("ISC" -> url("https://opensource.org/licenses/ISC"))
+ThisBuild / versionScheme          := Some("semver-spec")
+ThisBuild / evictionErrorLevel     := Level.Warn
+ThisBuild / scalaVersion           := "3.8.3"
+ThisBuild / organization           := "io.github.edadma"
+ThisBuild / organizationName       := "edadma"
+ThisBuild / organizationHomepage   := Some(url("https://github.com/edadma"))
+ThisBuild / version                := "0.2.0"
+ThisBuild / sonatypeCredentialHost := sonatypeCentralHost
 
-scalaVersion := "2.13.1"
+ThisBuild / publishConfiguration := publishConfiguration.value.withOverwrite(true).withChecksums(Vector.empty)
+ThisBuild / resolvers += Resolver.mavenLocal
+ThisBuild / resolvers += Resolver.sonatypeCentralSnapshots
+ThisBuild / resolvers += Resolver.sonatypeCentralRepo("releases")
 
-scalacOptions ++= Seq( "-deprecation", "-feature", "-unchecked", "-language:postfixOps", "-language:implicitConversions", "-language:existentials" )
+ThisBuild / sonatypeProfileName := "io.github.edadma"
 
-organization := "xyz.hyperreal"
-
-resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
-
-resolvers += "Hyperreal Repository" at "https://dl.bintray.com/edadma/maven"
-
-libraryDependencies ++= Seq(
-	"org.scalatest" %% "scalatest" % "3.0.8" % "test",
-	"org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
+ThisBuild / scmInfo := Some(
+  ScmInfo(
+    url("https://github.com/edadma/m68k"),
+    "scm:git@github.com:edadma/m68k.git",
+  ),
+)
+ThisBuild / developers := List(
+  Developer(
+    id = "edadma",
+    name = "Edward A. Maxedon, Sr.",
+    email = "edadma@gmail.com",
+    url = url("https://github.com/edadma"),
+  ),
 )
 
-libraryDependencies ++= Seq(
-	"xyz.hyperreal" %% "args" % "0.2",
-)
+ThisBuild / homepage    := Some(url("https://github.com/edadma/m68k"))
+ThisBuild / description := "Motorola 68000 CPU emulator"
 
-libraryDependencies ++= Seq(
-  "jline" % "jline" % "2.14.6"
-)
+ThisBuild / publishTo := sonatypePublishToBundle.value
 
-mainClass in (Compile, run) := Some( "xyz.hyperreal." + name.value.replace('-', '_') + ".Main" )
+lazy val m68k = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .in(file("."))
+  .settings(
+    name := "m68k",
+    scalacOptions ++=
+      Seq(
+        "-deprecation",
+        "-feature",
+        "-unchecked",
+        "-language:postfixOps",
+        "-language:implicitConversions",
+        "-language:existentials",
+        "-language:dynamics",
+      ),
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % "test",
+    publishMavenStyle      := true,
+    Test / publishArtifact := false,
+  )
+  .jvmSettings(
+    libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.1.0" % "provided",
+  )
+  .nativeSettings(
+    libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "1.1.0" % "provided",
+  )
+  .jsSettings(
+    jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
+    scalaJSLinkerConfig ~= { _.withModuleKind(ModuleKind.ESModule) },
+    scalaJSLinkerConfig ~= { _.withSourceMap(false) },
+    Test / scalaJSUseMainModuleInitializer := false,
+    Test / scalaJSUseTestModuleInitializer := true,
+    scalaJSUseMainModuleInitializer        := true,
+  )
 
-mainClass in assembly := Some( "xyz.hyperreal." + name.value.replace('-', '_') + ".Main" )
-
-assemblyJarName in assembly := name.value + "-" + version.value + ".jar"
-
-publishMavenStyle := true
-
-publishArtifact in Test := false
-
-pomIncludeRepository := { _ => false }
-
-licenses := Seq("ISC" -> url("https://opensource.org/licenses/ISC"))
-
-homepage := Some(url("https://github.com/edadma/" + name.value))
-
-pomExtra :=
-  <scm>
-    <url>git@github.com:edadma/{name.value}.git</url>
-    <connection>scm:git:git@github.com:edadma/{name.value}.git</connection>
-  </scm>
-  <developers>
-    <developer>
-      <id>edadma</id>
-      <name>Edward A. Maxedon, Sr.</name>
-      <url>https://github.com/edadma</url>
-    </developer>
-  </developers>
+lazy val root = project
+  .in(file("."))
+  .aggregate(m68k.js, m68k.jvm, m68k.native)
+  .settings(
+    name                                  := "m68k",
+    publish / skip                        := true,
+    publishLocal / skip                   := true,
+    Compile / unmanagedSourceDirectories  := Seq.empty,
+    Test / unmanagedSourceDirectories     := Seq.empty,
+  )

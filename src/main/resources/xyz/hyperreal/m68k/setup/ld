@@ -1,3 +1,0 @@
-m68k-ld --sysroot=$HOME/x-tools/m68k --script ldscript -Map $1.map startup.o services.o syscalls.o $1.o -lm -lc -lgcc -o $1.elf
-m68k-objcopy -O srec $1.elf $1.srec
-m68k-objdump -g $1.elf >$1.debug
